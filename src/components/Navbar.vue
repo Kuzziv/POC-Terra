@@ -1,4 +1,4 @@
-<!-- component/Navbar.vue-->
+<!-- Navbar.vue -->
 <template>
   <nav class="navbar">
     <div class="container">
@@ -11,138 +11,199 @@
           <button class="logout-button" @click="logout">Logout</button>
         </template>
         <template v-else>
-          <button class="login-button" @click="showLogin = true">Login</button>
+          <button class="login-button" @click="openModal">Login</button>
         </template>
       </div>
     </div>
 
-    <div v-if="showLogin" class="modal-overlay" @click.self="closeLogin">
-      <div class="modal-content">
-        <Login @close="closeLogin" />
+    <!-- Reusable Modal Component for Login -->
+    <ModalComponent :modalActive="showLogin" @close="closeModal">
+      <div>
+        <h2>Login</h2>
+        <form @submit.prevent="handleLogin">
+          <div class="input-group">
+            <label for="userName">User Name</label>
+            <input type="text" id="userName" v-model="userName" required />
+          </div>
+          <div class="input-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" v-model="password" required />
+          </div>
+          <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+          <div class="button-group">
+            <button type="submit" class="submit-button">Submit</button>
+            <button type="button" class="close-button" @click="closeModal">Close</button>
+          </div>
+        </form>
       </div>
-    </div>
+    </ModalComponent>
   </nav>
 </template>
 
 <script>
+import ModalComponent from './ModalComponent.vue';
+import useLoginModal from '@/composables/useLoginModal';
 import { useUserAuthStore } from '@/services/api/userAuth';
-import Login from './Login.vue';
-import { ref } from 'vue';
 
 export default {
   components: {
-    Login,
+    ModalComponent,
   },
   setup() {
-    const showLogin = ref(false);
-    const userAuthStore = useUserAuthStore();
+    const {
+      showLogin,
+      userName,
+      password,
+      errorMessage,
+      openModal,
+      closeModal,
+      handleLogin,
+    } = useLoginModal();
 
-    const closeLogin = () => {
-      showLogin.value = false;
-    };
+    const userAuthStore = useUserAuthStore();
 
     const logout = () => {
       userAuthStore.logout();
     };
 
     return {
+      userAuthStore,
       showLogin,
-      closeLogin,
+      userName,
+      password,
+      errorMessage,
+      openModal,
+      closeModal,
+      handleLogin,
       logout,
-      userAuthStore,  // Make sure to return userAuthStore from setup
     };
   },
 };
 </script>
 
-  
-  <style lang="scss" scoped>
-  @import '@/assets/styles/variables.scss';
-  @import '@/assets/styles/mixins.scss';
-  
-  /* Navbar styling */
-  .navbar {
-    background-color: $secondary-color;
-    color: $text-color;
-    width: 100%;
-    height: 60px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 100%;
-      padding: 0 20px;
-    }
+<style lang="scss" scoped>
+@import '@/assets/styles/variables.scss';
+@import '@/assets/styles/mixins.scss';
+
+/* Navbar styling */
+.navbar {
+  background-color: $secondary-color;
+  color: $text-color;
+  width: 100%;
+  height: 60px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+    padding: 0 20px;
   }
-  
+
   .navbar-list {
     list-style-type: none;
     padding: 0;
     margin: 0;
     display: flex;
     align-items: center;
-  
+
     li {
       margin: 0 15px;
     }
   }
-  
-  .nav-link {
-    color: $button-color;
-    text-decoration: none;
-    padding: 10px 20px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    border-radius: 4px;
-  
-    &:hover {
-      background-color: $secondary-color;
-      color: $primary-color;
-    }
-  }
-  
-  /* Styles for the login button */
-  .login-button {
-    background-color: $primary-color;
-    color: $button-color;
-    border: none;
-    padding: $spacing-unit;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s;
-  
-    &:hover {
-      background-color: $hover-color;
-    }
-  }
-  
-  /* Modal styles */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
+
+  .navbar-actions {
+    margin-left: auto; /* Pushes the login button to the right */
     display: flex;
-    justify-content: center;
     align-items: center;
+
+    .login-button {
+      background-color: $primary-color;
+      color: $button-color;
+      border: none;
+      padding: $spacing-unit;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s;
+
+      &:hover {
+        background-color: $hover-color;
+      }
+    }
   }
-  
-  .modal-content {
-    background: $background-color;
-    padding: $spacing-unit;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Alignment for labels and input fields to be in a grid-like layout */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+
+  label {
+    margin-bottom: 0.3rem;
+    font-weight: bold;
+    color: #333;
+  }
+
+  input {
     width: 100%;
-    max-width: 400px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box;
   }
-  </style>
-  
+}
+
+/* Styling the button group to center the buttons */
+.button-group {
+  display: flex;
+  justify-content: center; /* Align buttons to the center */
+  gap: 15px; /* Add space between buttons */
+  margin-top: 1.5rem;
+
+  button {
+    padding: 10px 20px;
+    border: none;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+  }
+
+  .submit-button {
+    background-color: #007bff; /* Blue to indicate submission */
+    color: #fff;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  .close-button {
+    background-color: crimson; /* Red to make it stand out as 'Cancel' */
+    color: #fff;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  /* For button press visual feedback */
+  button:active {
+    transform: translateY(0);
+  }
+}
+
+/* Styling the error message */
+.error-message {
+  color: crimson;
+  font-weight: bold;
+  margin-top: 10px;
+}
+</style>
